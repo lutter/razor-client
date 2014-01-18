@@ -1,0 +1,58 @@
+---
+
+# This file contains instructions for how the client should format various
+# objects. It is different from navigate.yaml in that the data in this file
+# is specific to the client whereas navigate.yaml contains data that should
+# really come from the server.
+
+collections:
+  brokers:
+    short:
+      name:
+      broker-type:
+      configuration:
+      policies:
+        format: count
+  nodes:
+    short:
+      name:
+      dhcp_mac:
+        format: mac
+      tags:
+        format: tag_names
+      policy:
+        format: select_name
+  policies:
+    short:
+      name:
+      repo:
+        format: name
+      recipe:
+        format: name
+      broker:
+        format: name
+      enabled:
+      max_count:
+      tags:
+        format: tag_names
+      nodes:
+        format: count
+  tasks:
+    short:
+      name:
+      description:
+      base:
+        format: name_if_present
+      boot_seq:
+  repos:
+    short:
+      name:
+      iso_url:
+  tags:
+    short:
+      name:
+      rule:
+      nodes:
+        format: count
+      policies:
+        format: count

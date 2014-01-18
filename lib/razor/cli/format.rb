@@ -1,5 +1,3 @@
-require 'terminal-table'
-
 module Razor::CLI
   module Format
     PriorityKeys = %w[ id name ]
@@ -37,7 +35,7 @@ module Razor::CLI
 
 
     def format_object(object, indent = 0)
-      if object.keys == ["id", "name"]
+      if object.keys == ["id", "name", "spec"]
         format_reference_object(object, indent)
       else
         format_default_object(object, indent)

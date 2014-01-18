@@ -5,6 +5,21 @@ require 'yaml'
 module Razor::CLI
   class Navigate
 
+    TRANSFORMS = {
+      "tag_names" =>
+        lambda { |tags| tags.map { |tag| tag['name'] }.join(", ") },
+      "select_name" =>
+        lambda { |item| item and item['name'] or "---" },
+      "mac" =>
+        lambda { |mac| mac.gsub(/-/, ":") },
+      "name" =>
+        lambda { |obj| obj ? obj['name'] : "---" },
+      "name_if_present" =>
+        lambda { |obj| obj ? obj['name'] : nil },
+      "count" =>
+        lambda { |coll| coll['count'] }
+    }
+
     def initialize(parse, segments)
       @parse = parse
       @segments = segments||[]
@@ -45,10 +60,14 @@ module Razor::CLI
         entrypoint
       elsif query?
         @doc = collections
-        while @segments.any?
-          move_to @segments.shift
+        if @segments.size == 1
+          show_collection(@segments.first)
+        else
+          while @segments.any?
+            move_to @segments.shift
+          end
+          @doc
         end
-        @doc
       elsif command?
         # @todo lutter 2013-08-16: None of this has any tests, and error
         # handling is heinous at best
@@ -67,6 +86,28 @@ module Razor::CLI
         json_post(url, body)
       else
         raise NavigationError.new(@doc_url, @segments, @doc)
+      end
+    end
+
+    def show_collection(name)
+      move_to name
+      if coll = views['collections'][name] and view = coll[@parse.format]
+        @doc.map do |item|
+          obj = json_get(item['id'])
+          view.keys.inject({}) do |result, k|
+            if view[k].is_a?(Hash)
+              if view[k]['format']
+                result[k] = TRANSFORMS[view[k]['format']].call(obj[k])
+                result.delete(k) unless result[k]
+              end
+            else
+              result[k] ||= obj[k]
+            end
+            result
+          end
+        end.sort { |a,b| a['name'] <=> b['name'] }
+      else
+        @doc
       end
     end
 
@@ -155,6 +196,15 @@ module Razor::CLI
     def self.annotations
       @@annotations ||=
         YAML::load_file(File::join(File::dirname(__FILE__), "navigate.yaml"))
+    end
+
+    def self.views
+      @@views ||=
+        YAML::load_file(File::join(File::dirname(__FILE__), "views.yaml"))
+    end
+
+    def views
+      self.class.views
     end
 
     def self.arg_type(cmd_name, arg_name)

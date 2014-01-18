@@ -14,6 +14,12 @@ module Razor::CLI
           @dump = true
         end
 
+        opts.on "-f", "--format FORMAT", "Control how much detail is listed" do |format|
+          ["full", "short"].include?(format) or
+            raise "FORMAT must be either 'full' or 'short'"
+          @format = format
+        end
+
         opts.on "-u", "--url URL",
           "The full Razor API URL, can also be set\n" + " "*37 +
           "with the RAZOR_API environment variable\n" + " "*37 +
@@ -73,11 +79,12 @@ ERR
       !!@dump
     end
 
-    attr_reader :api_url
+    attr_reader :api_url, :format
 
     def initialize(args)
       parse_and_set_api_url(ENV["RAZOR_API"] || DEFAULT_RAZOR_API, :env)
       @args = args.dup
+      @format = 'short'
       rest = get_optparse.order(args)
       if rest.any?
         @navigation = rest
